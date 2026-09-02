@@ -39,7 +39,7 @@
     "url": "https://github.com/jimmyjames177414/claude-memory-atlas/issues"
   },
   "dependencies": {
-    "commander": "^13.1.0",
+    "commander": "^15.0.0",
     "force-graph": "^1.51.4",
     "gray-matter": "^4.0.3",
     "marked": "^15.0.7"
