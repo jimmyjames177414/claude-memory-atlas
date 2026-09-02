@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { loadMemoryDir } from './loadMemoryDir.js';
 import { buildGraph } from './graph.js';
 import { renderHtml } from './render.js';
@@ -10,11 +11,17 @@ interface CliOptions {
   out: string;
 }
 
+function getVersion(): string {
+  const require = createRequire(import.meta.url);
+  return (require('../package.json') as { version: string }).version;
+}
+
 const program = new Command();
 
 program
   .name('memory-atlas')
   .description('Render Claude Code auto-memory markdown files as a self-contained interactive HTML graph')
+  .version(getVersion())
   .argument('[path]', 'directory containing memory markdown files', '.')
   .option('--out <file>', 'output HTML file path', './memory-graph.html')
   .action((inputPath: string, options: CliOptions) => {
