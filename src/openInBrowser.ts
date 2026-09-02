@@ -1,20 +1,25 @@
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
 // wslview first (WSL -> Windows default browser), then the native openers.
 const CANDIDATES = ['wslview', 'explorer.exe', 'xdg-open', 'open'];
 
 /**
- * Best-effort open, never throws and never signals failure to the caller. `explorer.exe`
- * launched from WSL is known to return a non-zero exit status even when it successfully
- * opens the file, so success is judged by "the command was found and ran", not its exit
- * code - checking the exit code would misreport that known-good case as a failure.
+ * Best-effort open, never throws and never signals failure to the caller. Spawned
+ * detached and unref'd because launching a GUI app has no bounded completion time -
+ * some openers don't return until the browser itself closes, and a synchronous spawn
+ * would hang the CLI for as long as that browser stays open.
  */
 export function openInBrowser(filePath: string): void {
-  for (const cmd of CANDIDATES) {
-    const result = spawnSync(cmd, [filePath], { stdio: 'ignore' });
-    if (!result.error) {
-      return;
-    }
+  tryNext(CANDIDATES, filePath);
+}
+
+function tryNext(remaining: string[], filePath: string): void {
+  const [cmd, ...rest] = remaining;
+  if (!cmd) {
+    console.log(`Could not auto-open a browser. Open this file manually: ${filePath}`);
+    return;
   }
-  console.log(`Could not auto-open a browser. Open this file manually: ${filePath}`);
+  const child = spawn(cmd, [filePath], { stdio: 'ignore', detached: true });
+  child.on('error', () => tryNext(rest, filePath));
+  child.unref();
 }
